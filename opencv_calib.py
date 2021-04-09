@@ -17,7 +17,8 @@ imgpoints = []
 
 
 def opencv_calib():
-    im_list = [file for file in os.listdir('./imgs') if file.endswith('.jpg')]
+    #im_list = [file for file in os.listdir('./imgs') if file.endswith('.jpg')]
+    im_list = ['img%d.jpg' % i for i in range(reference_img)]
     for filepath in im_list:
         img = cv2.imread(os.path.join('./imgs', filepath))
         height = img.shape[0]
@@ -48,6 +49,8 @@ def opencv_calib():
     print("RMS = ", ret)
     print("mtx = \n", mtx)
     print("dist = ", dist.ravel())
+    print("rvecs = ", rvecs)
+    print("tvecs = ", tvecs)
 
 
 if __name__ == '__main__':

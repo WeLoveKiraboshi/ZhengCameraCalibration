@@ -3,6 +3,17 @@ import os
 
 from image import Image
 from visualize import visualize_extrinsic
+from optimize import CameraOptimization
+
+####
+# COVIS Lab1 python script written by Yuki Saito  (2021.Feb.)
+# TEL : (+81)80-2161-0882
+# MAIL: yusa19971015@keio.jp
+# website: http://www.hvrl.ics.keio.ac.jp/saito_y/site/
+# Keio University , School of Science for Open and Environment Systems,
+#   the department of information and computer science 
+# (Ecole central de Nantes, M1 JEMARO students) 
+###
 
 
 
@@ -67,16 +78,37 @@ if __name__ == '__main__':
 	sum_abs = 0
 	sum_rmse = 0
 	for im in images:
-		abs, rmse = im.calc_reprojection_error()
+		abs, rmse = im.calc_reprojection_error(display=False)
 		sum_abs = abs
 		sum_rmse = rmse
 		pass
 	print("_______________________________________________")
-	print('Average : ReproError  abs = {},  rmse = {}'.format(sum_abs/n_imgs, sum_rmse/n_imgs))
+	print('Average : ReproError  abs = {},  rmse = {}'.format(sum_abs / n_imgs, sum_rmse / n_imgs))
 	print("_______________________________________________")
 
 
 
-	visualize_extrinsic(images)
+	optim = CameraOptimization(images)
+	optim.refine_params()
+
+	sum_abs = 0
+	sum_rmse = 0
+	for im in images:
+		abs, rmse = im.calc_reprojection_error(display=True, save=True)
+		sum_abs = abs
+		sum_rmse = rmse
+		pass
+	print("_______________________________________________")
+	print('Average : ReproError  abs = {},  rmse = {}'.format(sum_abs / n_imgs, sum_rmse / n_imgs))
+	print("_______________________________________________")
+
+	for im in images:
+		R, t = im.find_extrinsic(cam_intrinsic)
+		print('R = \n', R)
+		print('t = ', t)
+
+	#visualize_extrinsic(images)
+	#visualize_extrinsic(images)
+
 
 

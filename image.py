@@ -1,8 +1,20 @@
-'''
-Define image class which read the image, extract chessboard corners find the homography
-'''
+
+### Define image class which read the image, extract chessboard corners find the homography
+# COVIS Lab1 python script written by Yuki Saito  (2021.Feb.)
+# TEL : (+81)80-2161-0882
+# MAIL: yusa19971015@keio.jp
+# website: http://www.hvrl.ics.keio.ac.jp/saito_y/site/
+# Keio University , School of Science for Open and Environment Systems,
+#   the department of information and computer science 
+# (Ecole central de Nantes, M1 JEMARO students) 
+###
+
 import cv2
 import numpy as np
+
+
+
+
 
 '''
 def normalize_trans(points):
@@ -211,24 +223,28 @@ class Image:
 		h2 = self.H[:, 1]
 		h3 = self.H[:, 2]
 		invK = np.linalg.inv(K)
-		v = 1 / ((np.linalg.norm(invK @ h1)+np.linalg.norm(invK @ h2))/2)
-		r1 = v * invK @ h1
-		r2 = v * invK @ h2
+		scaling = 1 / ((np.linalg.norm(invK @ h1)))
+		r1 = invK @ h1
+		r2 = invK @ h2
 		r3 = np.cross(r1, r2)
 		R = np.zeros((3, 3))
-		R[:, 0] = r1.reshape(3)
-		R[:, 1] = r2.reshape(3)
+		R[:, 0] = scaling * r1.reshape(3)
+		R[:, 1] = scaling * r2.reshape(3)
 		R[:, 2] = r3.reshape(3)
-		#u, s, vh = np.linalg.svd(R)
-		#R = u @ vh.T
-		#print('r1 = {}, r2 = {}, r3 = {}'.format(r1.shape, r2.shape, r3.shape))
-		t = v * invK @ h3
+		t = scaling * invK @ h3
+
+		#from scipy.spatial.transform import Rotation
+		#R = Rotation.from_matrix(R).as_matrix()
+		U, sig, Vt = np.linalg.svd(R)
+		R = np.dot(U, Vt)
+
+
 		self.T = t.reshape(-1, 1)
 		self.R = R
 		self.K = K
 		return self.R, self.T
 
-	def calc_reprojection_error(self, display=False):
+	def calc_reprojection_error(self, display=False, save=False):
 		r1r2t = np.zeros((3, 3))
 		r1r2t[:, 0] = self.R[:, 0]
 		r1r2t[:, 1] = self.R[:, 1]
@@ -238,22 +254,22 @@ class Image:
 		for i in range(self.rows * self.cols):
 			world_coordinate_pos = np.array([self.plane_pts[i][0],self.plane_pts[i][1],1])
 			image_coordinate_pos_original = np.array([self.im_pts[i][0], self.im_pts[i][1], 1])
-			image_coordinate_pos = r1r2t@world_coordinate_pos
-			image_coordinate_pos = self.K @ image_coordinate_pos
+			image_coordinate_pos = self.K @r1r2t@world_coordinate_pos
 			image_coordinate_pos = image_coordinate_pos/image_coordinate_pos[2]
 			diff[i, :] = image_coordinate_pos - image_coordinate_pos_original
 			if display:
 				cv2.circle(self.im, (int(image_coordinate_pos_original[0]), int(image_coordinate_pos_original[1])), 3, (255, 0, 0), -1)  # B
 				cv2.circle(self.im, (int(image_coordinate_pos[0]), int(image_coordinate_pos[1])), 5, (0, 0, 255), 1) # R
 		ABS = np.mean(np.abs(diff))
-		RMSE = np.mean(np.sqrt(np.power(diff, 2)))
+		RMSE = np.sqrt(np.mean(np.power(diff, 2)))
 		print('Image[{}] : ReproError  abs = {},  rmse = {}'.format(self.id, ABS, RMSE))
 
 		if display:
 			cv2.imshow('im', self.im)
-			cv2.waitKey(1000)
+			cv2.waitKey(0)
 			cv2.destroyWindow('im')
-			cv2.imwrite("reprojected_{}.png".format(self.id), self.im)
+			if save:
+				cv2.imwrite("reprojected_{}.png".format(self.id), self.im)
 
 		return ABS, RMSE
 
